@@ -1,65 +1,72 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { hydrateContent, packages } from "../content";
 import { configureAnalytics } from "../lib/analytics";
-import { allServices, api, type Settings } from "../lib/api";
-export let siteSettings: Settings = {};
+import {
+  allServices,
+  fetchPackages,
+  fetchPublicSettings,
+  type Settings,
+} from "../lib/api";
+import {
+  DEFAULT_SERVICES,
+  DEFAULT_PACKAGES,
+  DEFAULT_SETTINGS,
+} from "../lib/fallback-data";
+
+export let siteSettings: Settings = DEFAULT_SETTINGS;
+
+// Initialize default content synchronously so the website renders instantly
+hydrateContent(
+  DEFAULT_SERVICES.map((row) => ({
+    ...row,
+    id: row.id || row.slug,
+    description: row.summary,
+    items: row.deliverables,
+  })),
+  DEFAULT_SETTINGS,
+);
+packages.splice(0, packages.length, ...DEFAULT_PACKAGES);
+
 export default function PublicData({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false),
-    [error, setError] = useState(""),
-    [attempt, setAttempt] = useState(0);
+  const [, setAttempt] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      allServices(),
-      api<Settings>("/settings/public"),
-      api<string[]>("/packages"),
-    ])
+
+    Promise.all([allServices(), fetchPublicSettings(), fetchPackages()])
       .then(([rows, settings, names]) => {
         if (cancelled) return;
+        const validRows =
+          rows && rows.length > 0 ? rows : DEFAULT_SERVICES;
+        const validPackages =
+          names && names.length > 0 ? names : DEFAULT_PACKAGES;
+        const validSettings =
+          settings && Object.keys(settings).length > 0
+            ? settings
+            : DEFAULT_SETTINGS;
+
         hydrateContent(
-          rows.map((row) => ({
+          validRows.map((row) => ({
             ...row,
+            id: row.id || row.slug,
             description: row.summary,
             items: row.deliverables,
           })),
-          settings,
+          validSettings,
         );
-        packages.splice(0, packages.length, ...names);
-        siteSettings = settings;
-        configureAnalytics(settings);
-        setReady(true);
+        packages.splice(0, packages.length, ...validPackages);
+        siteSettings = validSettings;
+        configureAnalytics(validSettings);
+        setAttempt((x) => x + 1);
       })
       .catch(() => {
-        if (!cancelled)
-          setError(
-            "We couldn’t load the website. Please check the connection and try again.",
-          );
+        // Fallback data is already hydrated; site remains fully functional
       });
+
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
-  if (error)
-    return (
-      <main className="wrap" role="alert">
-        <h1>Unable to connect</h1>
-        <p>{error}</p>
-        <button
-          className="button"
-          onClick={() => {
-            setError("");
-            setAttempt((x) => x + 1);
-          }}
-        >
-          Try again
-        </button>
-      </main>
-    );
-  return ready ? (
-    children
-  ) : (
-    <main className="wrap" role="status">
-      Loading Aster Digital…
-    </main>
-  );
+  }, []);
+
+  return <>{children}</>;
 }
