@@ -10,7 +10,7 @@
     "dev:web": "vite --host localhost",
     "dev:api": "tsx watch apps/api/src/index.ts",
     "db:local": "node scripts/local-db.mjs",
-    "db:generate": "prisma generate --schema apps/api/prisma/schema.prisma",
+    "db:generate": "node scripts/prisma.mjs generate",
     "db:migrate": "node scripts/prisma.mjs migrate deploy",
     "db:seed": "tsx apps/api/prisma/seed.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/api/tsconfig.json",
