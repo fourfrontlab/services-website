@@ -113,6 +113,7 @@
 }
 .admin-table table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -216,5 +217,221 @@
   }
   .admin-editor {
     padding: 16px;
+  }
+}
+/* Dedicated studio workspace; all styling is scoped to the admin folder. */
+.admin-shell {
+  background: #f4f6f8;
+  color: #192c31;
+  font-family: Inter, Arial, sans-serif;
+}
+.admin-shell a {
+  color: #215e52;
+  text-decoration: none;
+}
+.admin-shell h1 {
+  letter-spacing: -1.2px;
+  font-weight: 650;
+  margin: 0 0 12px;
+}
+.admin-header {
+  background: #fff;
+  padding: 18px 24px;
+  border: 1px solid #e0e7e6;
+  border-radius: 14px;
+}
+.admin-header > a:first-child {
+  font-weight: 750;
+  margin-right: auto;
+}
+.admin-header > span {
+  font-size: 13px;
+  color: #657573;
+}
+.admin-shell nav {
+  padding: 8px;
+  background: #e8eeec;
+  border-radius: 12px;
+}
+.admin-shell nav a {
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-shell nav a:hover {
+  background: #d9e4df;
+}
+.admin-shell nav a.active {
+  background: #203c30;
+}
+.admin-shell .admin-eyebrow {
+  color: #56786d;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 1.8px;
+  margin: 0 0 10px;
+}
+.admin-intro {
+  color: #677974;
+  margin-bottom: 28px;
+}
+.admin-inbox {
+  background: #fff;
+  border: 1px solid #dbe5e0;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 24px 0;
+}
+.admin-inbox h2 {
+  margin: 0;
+}
+.admin-inbox > p {
+  color: #64756e;
+  font-size: 13px;
+}
+.admin-enquiry-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid #e8edeb;
+}
+.admin-enquiry-row > div {
+  flex: 1;
+  min-width: 150px;
+}
+.admin-enquiry-row strong,
+.admin-enquiry-row div span {
+  display: block;
+}
+.admin-enquiry-row div span {
+  font-size: 12px;
+  color: #6a7873;
+  margin-top: 4px;
+}
+.admin-enquiry-row > p {
+  flex: 2;
+  font-size: 13px;
+  color: #64756e;
+  overflow-wrap: anywhere;
+}
+.admin-status {
+  display: inline-block;
+  border-radius: 30px;
+  padding: 4px 10px;
+  background: #eef1f5;
+  color: #475569;
+  font-size: 12px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.status-new {
+  background: #e7efff;
+  color: #2455b4;
+}
+.status-contacted,
+.status-qualified {
+  background: #fff0d5;
+  color: #8b5a13;
+}
+.status-won,
+.status-paid {
+  background: #dff4e9;
+  color: #216947;
+}
+.status-lost,
+.status-overdue {
+  background: #fce5e4;
+  color: #a23b36;
+}
+.admin-empty {
+  padding: 24px 0;
+}
+.admin-kpis article,
+.admin-chart {
+  border-radius: 12px;
+  border: 1px solid #dbe5e0;
+}
+.admin-kpis article span {
+  font-size: 13px;
+  color: #64756e;
+}
+.admin-table {
+  border: 1px solid #dbe5e0;
+  border-radius: 12px;
+}
+.admin-table th {
+  background: #eaf0ed;
+  color: #375247;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+.admin-table tbody tr:hover {
+  background: #f8fbf9;
+}
+.admin-shell .admin-filters {
+  background: white;
+  border: 1px solid #dbe5e0;
+  border-radius: 12px;
+  padding: 20px;
+  gap: 14px;
+}
+.admin-filters label {
+  flex: 1;
+  min-width: 140px;
+  font-size: 12px;
+}
+.admin-shell button {
+  border-radius: 8px;
+  font-size: 13px;
+}
+.admin-shell input:focus,
+.admin-shell textarea:focus,
+.admin-shell select:focus {
+  outline: 2px solid #79a899;
+  outline-offset: 2px;
+}
+.admin-login {
+  max-width: 470px;
+  padding: 42px;
+  margin: 10vh auto;
+  background: #fff;
+  border: 1px solid #dce5e0;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px #183a2814;
+}
+.admin-login h1 {
+  font-size: 38px;
+  text-transform: none;
+}
+.admin-login > p:not(.admin-eyebrow) {
+  color: #677974;
+  font-size: 14px;
+}
+.admin-login button {
+  padding: 14px;
+}
+@media (max-width: 700px) {
+  .admin-header {
+    padding: 14px;
+  }
+  .admin-header > span {
+    width: 100%;
+    order: 3;
+  }
+  .admin-enquiry-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .admin-enquiry-row > p {
+    flex-basis: 100%;
+    order: 3;
+  }
+  .admin-login {
+    margin: 5vh 16px;
+    padding: 28px;
+  }
+  .admin-inbox {
+    padding: 18px;
   }
 }

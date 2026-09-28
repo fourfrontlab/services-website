@@ -23,6 +23,7 @@ test("database-backed API: auth, CSRF, lead, services, revenue, newsletter, rota
   await db.admin.create({
     data: {
       email: "owner@example.com",
+      username: "studio_owner",
       passwordHash: await passwordHash(password),
     },
   });
@@ -34,11 +35,17 @@ test("database-backed API: auth, CSRF, lead, services, revenue, newsletter, rota
     .send({ email: "owner@example.com", password })
     .expect(403);
   const agent = request.agent(app);
+  await request(app)
+    .post("/api/admin/login")
+    .set("Origin", origin)
+    .send({ username: "studio_owner", password: "incorrect" })
+    .expect(401);
   const login = await agent
     .post("/api/admin/login")
     .set("Origin", origin)
-    .send({ email: "owner@example.com", password })
+    .send({ username: "STUDIO_OWNER", password })
     .expect(200);
+  assert.equal(login.body.username, "studio_owner");
   let csrf = login.body.csrfToken;
   assert.match(String(login.headers["set-cookie"]), /HttpOnly/);
   assert.match(String(login.headers["set-cookie"]), /SameSite=Strict/);
@@ -62,6 +69,9 @@ test("database-backed API: auth, CSRF, lead, services, revenue, newsletter, rota
     name: "Test client",
     email: "client@example.com",
     description: "Build a site",
+    source: "/contact?intent=consultation",
+    intent: "consultation",
+    serviceName: "Web design",
     eventId,
   };
   await request(app)
@@ -88,12 +98,25 @@ test("database-backed API: auth, CSRF, lead, services, revenue, newsletter, rota
   assert.equal(await db.outbox.count(), 2);
   const leads = await agent.get("/api/admin/leads?status=new").expect(200);
   const leadId = leads.body.items[0].id;
+  const searched = await agent
+    .get("/api/admin/leads?search=TEST%20CLIENT")
+    .expect(200);
+  assert.equal(searched.body.total, 1);
+  assert.equal(searched.body.items[0].source, leadData.source);
+  assert.equal(
+    (await agent.get("/api/admin/leads?search=unmatched").expect(200)).body
+      .total,
+    0,
+  );
   await agent
     .patch(`/api/admin/leads/${leadId}`)
     .set("Origin", origin)
     .set("X-CSRF-Token", csrf)
     .send({ status: "won", notes: "Agreed scope" })
     .expect(200);
+  const savedLead = await agent.get(`/api/admin/leads/${leadId}`).expect(200);
+  assert.equal(savedLead.body.status, "won");
+  assert.equal(savedLead.body.notes, "Agreed scope");
   await agent
     .get("/api/admin/leads/export")
     .expect(200)
@@ -335,6 +358,11 @@ test("outbox excludes contact PII from both providers and clears delivered paylo
     return new Response("{}", { status: 200 });
   };
   try {
+    // Make test jobs explicitly due; do not depend on database/application clock precision.
+    await db.outbox.updateMany({
+      where: { deliveredAt: null },
+      data: { nextAttemptAt: new Date(0) },
+    });
     await deliverOutbox();
     const meta = calls.find((call) => call.url.includes("graph.facebook.com"))!;
     assert.equal(meta.body.data[0].user_data.em, undefined);
@@ -421,6 +449,11 @@ test("server relay honours independent purposes and rejects unconsented legacy j
     return new Response("{}");
   };
   try {
+    // Make test jobs explicitly due; do not depend on database/application clock precision.
+    await db.outbox.updateMany({
+      where: { deliveredAt: null },
+      data: { nextAttemptAt: new Date(0) },
+    });
     await deliverOutbox();
     assert.equal(calls, 0);
     assert.ok(

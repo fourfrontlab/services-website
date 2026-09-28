@@ -21,7 +21,7 @@ npx tsx scripts/local-admin.ts
 npm run dev
 ```
 
-Open [the website](http://localhost:5173) or [admin](http://localhost:5173/admin). Generated local login details are in `.local/admin-access.txt`. The password is random and unique to this installation. Do not copy this development account into production. Change it in Admin → Settings.
+Open [the website](http://localhost:5173) or [admin](http://localhost:5173/admin). This installation has the requested username `syedhaseebbadshah` with the password supplied privately in the conversation. Fresh installations can use the generated email login in `.local/admin-access.txt`, or configure a username account by setting `ADMIN_USERNAME` and `ADMIN_PASSWORD` and running `node --import tsx scripts/configure-admin.ts`. Never commit credentials. Change passwords in Admin → Settings.
 
 The local database binds to `127.0.0.1:54329` and persists under `.local/postgres`. Its generated credentials stay in ignored `.local/database.json`. First startup creates `apps/api/.env` if missing. Vite proxies `/api` to the backend on port 4000. Do not open `index.html` directly. Restart the database and application commands to resume work; existing data is preserved.
 

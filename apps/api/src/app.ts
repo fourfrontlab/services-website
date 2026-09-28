@@ -118,6 +118,13 @@ function filters(req: express.Request) {
     skip: (q.page - 1) * q.limit,
     take: q.limit,
     where: {
+      ...(q.search
+        ? {
+            OR: ["name", "email", "company", "description"].map((field) => ({
+              [field]: { contains: q.search, mode: "insensitive" as const },
+            })),
+          }
+        : {}),
       ...(q.status ? { status: q.status } : {}),
       ...(q.service ? { serviceName: q.service } : {}),
       ...(q.from || q.to
@@ -353,7 +360,10 @@ app.post("/api/track/event", requireOrigin, async (req, res) => {
 });
 app.post("/api/admin/login", loginLimit, requireOrigin, async (req, res) => {
   const body = v.login.parse(req.body);
-  const key = hash(body.email);
+  const admin = await db.admin.findUnique({
+    where: body.username ? { username: body.username } : { email: body.email! },
+  });
+  const key = hash(admin?.id || body.username || body.email!);
   const attempt = await db.loginAttempt.findUnique({ where: { key } });
   if (attempt?.lockedUntil && attempt.lockedUntil > new Date()) {
     res
@@ -361,7 +371,6 @@ app.post("/api/admin/login", loginLimit, requireOrigin, async (req, res) => {
       .json({ error: "Login temporarily locked. Try again later." });
     return;
   }
-  const admin = await db.admin.findUnique({ where: { email: body.email } });
   const valid = await verifyPassword(
     body.password,
     admin?.passwordHash ||
@@ -386,7 +395,7 @@ app.post("/api/admin/login", loginLimit, requireOrigin, async (req, res) => {
           ),
         },
       });
-    res.status(401).json({ error: "Invalid email or password" });
+    res.status(401).json({ error: "Invalid username or password" });
     return;
   }
   await db.loginAttempt.deleteMany({ where: { key } });
@@ -396,7 +405,7 @@ app.post("/api/admin/login", loginLimit, requireOrigin, async (req, res) => {
   });
   const csrfToken = await issue(res, admin.id);
   await audit(db, admin.id, "login", "Admin", admin.id);
-  res.json({ csrfToken, email: admin.email });
+  res.json({ csrfToken, email: admin.email, username: admin.username });
 });
 app.get("/api/admin/csrf", (req, res) => {
   emptyQuery(req);
@@ -459,6 +468,7 @@ app.get("/api/admin/me", (req, res) => {
   res.json({
     id: res.locals.admin.id,
     email: res.locals.admin.email,
+    username: res.locals.admin.username,
     role: res.locals.admin.role,
     csrfToken: req.cookies.csrf,
   });

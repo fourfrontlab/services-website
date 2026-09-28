@@ -25,8 +25,23 @@ export const contact = z
   .strict();
 export const newsletter = z.object({ email, ...spam }).strict();
 export const login = z
-  .object({ email, password: z.string().min(1).max(128) })
-  .strict();
+  .object({
+    email: email.optional(),
+    username: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(3)
+      .max(60)
+      .regex(/^[a-z0-9_]+$/)
+      .optional(),
+    password: z.string().min(1).max(128),
+  })
+  .strict()
+  .refine(
+    (value) => Boolean(value.email) !== Boolean(value.username),
+    "Enter a username or email",
+  );
 export const changePassword = z
   .object({
     currentPassword: z.string().min(1).max(128),
@@ -90,6 +105,7 @@ export const pagination = z
     limit: z.coerce.number().int().min(1).max(100).default(25),
     status: status.optional(),
     service: short.optional(),
+    search: short.optional(),
     from: z.string().date().optional(),
     to: z.string().date().optional(),
   })

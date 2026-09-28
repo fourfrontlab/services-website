@@ -112,6 +112,7 @@ export default function ContactPage() {
           intent: data.intent,
           serviceName: data.service,
           packageName: data.package,
+          source: window.location.pathname + window.location.search,
           eventId: eventId.current,
           website_url: data.website_url || "",
           turnstileToken: token,

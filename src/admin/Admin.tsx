@@ -1,5 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, NavLink, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { groups } from "../content";
 import { api, exportCsv, type List, type Settings } from "../lib/api";
 import "./admin.css";
@@ -25,8 +32,8 @@ export default function Admin() {
     [checking, setChecking] = useState(true),
     [error, setError] = useState("");
   useEffect(() => {
-    api<{ email: string }>("/admin/me")
-      .then((user) => setEmail(user.email))
+    api<{ email: string; username: string | null }>("/admin/me")
+      .then((user) => setEmail(user.username || user.email))
       .catch(() => setEmail(null))
       .finally(() => setChecking(false));
   }, []);
@@ -40,7 +47,7 @@ export default function Admin() {
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <Link to="/admin">Aster Digital / Admin</Link>
+        <Link to="/admin">Aster Digital / Studio</Link>
         <span>{email}</span>
         <Link to="/">View website</Link>
         <button
@@ -63,7 +70,7 @@ export default function Admin() {
             to={section === "dashboard" ? "/admin" : "/admin/" + section}
             end
           >
-            {section.replace("-", " ")}
+            {section === "leads" ? "Enquiries" : section.replace("-", " ")}
           </NavLink>
         ))}
       </nav>
@@ -104,8 +111,9 @@ function Login({ onLogin }: { onLogin: (email: string) => void }) {
   const navigate = useNavigate();
   return (
     <main className="admin-shell admin-login">
-      <p>Aster Digital</p>
-      <h1>Studio administration</h1>
+      <p className="admin-eyebrow">ASTER DIGITAL · ADMIN</p>
+      <h1>Welcome back.</h1>
+      <p>Sign in to manage enquiries, services and your studio.</p>
       <form
         onSubmit={async (event) => {
           event.preventDefault();
@@ -114,14 +122,19 @@ function Login({ onLogin }: { onLogin: (email: string) => void }) {
           setError("");
           const form = new FormData(event.currentTarget);
           try {
-            const result = await api<{ email: string }>("/admin/login", {
+            const result = await api<{
+              email: string;
+              username: string | null;
+            }>("/admin/login", {
               method: "POST",
               body: {
-                email: form.get("email"),
+                ...(String(form.get("identity")).includes("@")
+                  ? { email: form.get("identity") }
+                  : { username: form.get("identity") }),
                 password: form.get("password"),
               },
             });
-            onLogin(result.email);
+            onLogin(result.username || result.email);
             navigate("/admin");
           } catch (error) {
             setError(messageOf(error));
@@ -131,8 +144,8 @@ function Login({ onLogin }: { onLogin: (email: string) => void }) {
         }}
       >
         <label>
-          Email
-          <input name="email" type="email" autoComplete="username" required />
+          Username or email
+          <input name="identity" type="text" autoComplete="username" required />
         </label>
         <label>
           Password
@@ -148,6 +161,67 @@ function Login({ onLogin }: { onLogin: (email: string) => void }) {
       </form>
       <Link to="/">Back to website</Link>
     </main>
+  );
+}
+function RecentEnquiries() {
+  const [data, setData] = useState<List<Row>>();
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      if (document.hidden) return;
+      api<List<Row>>("/admin/leads?limit=5&status=new")
+        .then((result) => {
+          if (active) {
+            setData(result);
+            setError("");
+          }
+        })
+        .catch((error) => {
+          if (active) setError(messageOf(error));
+        });
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 30000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+  return (
+    <section className="admin-inbox">
+      <div className="admin-title">
+        <div>
+          <p className="admin-eyebrow">NEEDS YOUR ATTENTION</p>
+          <h2>New enquiries {data ? `(${data.total})` : ""}</h2>
+        </div>
+        <Link to="/admin/leads">Open enquiry inbox ↗</Link>
+      </div>
+      <p>New enquiries refresh every 30 seconds while this page is visible.</p>
+      {error && <p role="alert">{error}</p>}
+      {!data && !error && <p role="status">Loading enquiries…</p>}
+      {data?.items.map((row) => (
+        <Link
+          className="admin-enquiry-row"
+          key={row.id}
+          to={`/admin/leads?enquiry=${row.id}`}
+        >
+          <div>
+            <strong>{display(row.name)}</strong>
+            <span>
+              {display(row.serviceName || row.intent || "General enquiry")}
+            </span>
+          </div>
+          <p>{display(row.description).slice(0, 130)}</p>
+          <span className="admin-status status-new">New</span>
+        </Link>
+      ))}
+      {data && !data.items.length && (
+        <p className="admin-empty">
+          You're all caught up. New customer enquiries will appear here.
+        </p>
+      )}
+    </section>
   );
 }
 type Summary = {
@@ -171,7 +245,12 @@ function Dashboard() {
   if (!data) return <p role="status">{error || "Loading dashboard…"}</p>;
   return (
     <>
+      <p className="admin-eyebrow">YOUR WORKSPACE</p>
       <h1>Studio overview</h1>
+      <p className="admin-intro">
+        Keep conversations moving. Everything your studio needs, in one place.
+      </p>
+      <RecentEnquiries />
       <div className="admin-kpis">
         {[
           ["Leads in the last 7 days", data.newLeads],
@@ -246,13 +325,15 @@ function Dashboard() {
   );
 }
 const columns: Record<string, string[]> = {
-  leads: ["name", "email", "serviceName", "status", "createdAt"],
+  leads: ["name", "email", "serviceName", "intent", "status", "createdAt"],
   services: ["name", "group", "isPublished", "sortOrder"],
   revenue: ["clientName", "amount", "currency", "status", "invoicedAt"],
   newsletter: ["email", "isConfirmed", "unsubscribedAt", "createdAt"],
   "audit-log": ["adminId", "action", "entity", "entityId", "createdAt"],
 };
 function Records({ kind }: { kind: string }) {
+  const [params] = useSearchParams();
+  const enquiryId = params.get("enquiry");
   const [data, setData] = useState<List<Row>>({ items: [], total: 0, page: 1 }),
     [page, setPage] = useState(1),
     [filter, setFilter] = useState(""),
@@ -262,6 +343,20 @@ function Records({ kind }: { kind: string }) {
     [selected, setSelected] = useState<Row | null>(),
     [busy, setBusy] = useState(false);
   const query = `?page=${page}&limit=25${filter}`;
+  useEffect(() => {
+    if (kind !== "leads" || !enquiryId) return;
+    let active = true;
+    api<Row>(`/admin/leads/${encodeURIComponent(enquiryId)}`)
+      .then((row) => {
+        if (active) setSelected(row);
+      })
+      .catch((error) => {
+        if (active) setError(messageOf(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [kind, enquiryId]);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -299,7 +394,12 @@ function Records({ kind }: { kind: string }) {
   return (
     <>
       <div className="admin-title">
-        <h1>{kind.replace("-", " ")}</h1>
+        <h1>
+          {kind === "leads" ? "Customer enquiries" : kind.replace("-", " ")}
+        </h1>
+        <button onClick={() => setRevision((x) => x + 1)} disabled={loading}>
+          Refresh
+        </button>
         {["services", "revenue"].includes(kind) && (
           <button onClick={() => setSelected(null)}>
             Add {kind === "services" ? "service" : "revenue entry"}
@@ -331,6 +431,13 @@ function Records({ kind }: { kind: string }) {
             setPage(1);
           }}
         >
+          <label>
+            Search enquiries
+            <input
+              name="search"
+              placeholder="Name, email, company or message"
+            />
+          </label>
           <label>
             Status
             <select name="status">
@@ -373,7 +480,17 @@ function Records({ kind }: { kind: string }) {
               {data.items.map((row, index) => (
                 <tr key={row.id}>
                   {columns[kind].map((column) => (
-                    <td key={column}>{display(row[column])}</td>
+                    <td key={column}>
+                      {column === "status" ? (
+                        <span className={`admin-status status-${row[column]}`}>
+                          {display(row[column])}
+                        </span>
+                      ) : column === "createdAt" ? (
+                        new Date(String(row[column])).toLocaleString()
+                      ) : (
+                        display(row[column])
+                      )}
+                    </td>
                   ))}
                   {kind !== "audit-log" && (
                     <td>
