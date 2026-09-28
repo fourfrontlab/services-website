@@ -1,6 +1,14 @@
 import dotenv from "dotenv";
 import { spawnSync } from "node:child_process";
 dotenv.config({ path: "apps/api/.env", quiet: true });
+dotenv.config({ path: ".env", quiet: true });
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL =
+    "postgresql://postgres:postgres@localhost:5432/postgres";
+}
+if (!process.env.DIRECT_URL) {
+  process.env.DIRECT_URL = process.env.DATABASE_URL;
+}
 const result = spawnSync(
   process.execPath,
   [

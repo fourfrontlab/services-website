@@ -9,7 +9,21 @@ const schema = z.object({
   APP_URL: z.string().url(),
   API_URL: z.string().url(),
   CORS_ORIGIN: z.string().min(1),
-  DATABASE_URL: z.string().startsWith("postgresql://"),
+  DATABASE_URL: z
+    .string()
+    .refine(
+      (url) => url.startsWith("postgresql://") || url.startsWith("postgres://"),
+      { message: "DATABASE_URL must start with postgresql:// or postgres://" },
+    ),
+  DIRECT_URL: z
+    .string()
+    .refine(
+      (url) => url.startsWith("postgresql://") || url.startsWith("postgres://"),
+      { message: "DIRECT_URL must start with postgresql:// or postgres://" },
+    )
+    .optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
   JWT_ACCESS_SECRET: z.string().min(32),
   COOKIE_DOMAIN: z.string().default(""),
   TRUST_PROXY: z.coerce.number().int().min(0).max(3).default(0),

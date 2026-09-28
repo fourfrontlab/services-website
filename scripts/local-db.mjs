@@ -31,7 +31,7 @@ await client.end();
 if (!fs.existsSync("apps/api/.env")) {
   fs.writeFileSync(
     "apps/api/.env",
-    `NODE_ENV=development\nPORT=4000\nAPP_URL=http://localhost:5173\nAPI_URL=http://localhost:4000\nCORS_ORIGIN=http://localhost:5173\nDATABASE_URL=postgresql://${credentials.user}:${credentials.password}@127.0.0.1:${credentials.port}/aster_digital\nJWT_ACCESS_SECRET=${randomBytes(48).toString("hex")}\nDEV_SPAM_BYPASS=true\n`,
+    `NODE_ENV=development\nPORT=4000\nAPP_URL=http://localhost:5173\nAPI_URL=http://localhost:4000\nCORS_ORIGIN=http://localhost:5173\nDATABASE_URL=postgresql://${credentials.user}:${credentials.password}@127.0.0.1:${credentials.port}/aster_digital\nDIRECT_URL=postgresql://${credentials.user}:${credentials.password}@127.0.0.1:${credentials.port}/aster_digital\nJWT_ACCESS_SECRET=${randomBytes(48).toString("hex")}\nDEV_SPAM_BYPASS=true\n`,
   );
 }
 console.log(
