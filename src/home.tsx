@@ -1,5 +1,6 @@
 import AnimatedStats from "./animated-stats";
 import HomeServices from "./home-services";
+import InteractiveHero from "./interactive-hero";
 import ProjectShowcase from "./project-showcase";
 
 import { Link } from "react-router-dom";
@@ -16,34 +17,7 @@ import {
 export default function Home() {
   return (
     <div className="studio-home">
-      <section className="new-hero wrap">
-        <div className="new-hero-copy">
-          <p className="eyebrow">INDEPENDENT DIGITAL & CREATIVE STUDIO</p>
-          <h1>
-            A better presence.
-            <br />
-            <em>A bigger possibility.</em>
-          </h1>
-          <p className="hero-description">
-            Websites, branding, photography, video, and digital tools for UK
-            startups and growing businesses. Help customers understand your
-            offer, trust your business, and take the next step.
-          </p>
-          <div className="actions">
-            <Link className="button" to="/contact?intent=consultation">
-              Get a Free Consultation <span aria-hidden="true">↗</span>
-            </Link>
-            <Link className="text-link" to="/work">
-              View Our Work <span aria-hidden="true">↗</span>
-            </Link>
-          </div>
-          <div className="hero-assurance">
-            <span>Clear scope</span>
-            <span>Collaborative process</span>
-            <span>Thoughtful handover</span>
-          </div>
-        </div>
-      </section>
+      <InteractiveHero />
       <div className="home-light">
         <section className="studio-stats" aria-label="Our offering at a glance">
           <div className="wrap">

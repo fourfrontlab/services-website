@@ -1,0 +1,114 @@
+/* ============================================================
+   INTERACTIVE HERO  —  SVG overlay approach
+   Banner: 1376 × 768 px
+   The SVG viewBox="0 0 1376 768" is IDENTICAL to the image
+   coordinate system, so rects cannot drift at any screen width.
+   No object-fit. No transform. No image duplication.
+   ============================================================ */
+
+/* ── Outer section ──────────────────────────────────────────── */
+.interactive-hero {
+  display: block;
+  width: 100%;
+  line-height: 0;   /* collapse whitespace gap beneath inline image */
+}
+
+/* ── Banner container ───────────────────────────────────────── */
+/*
+ * This div is the ONLY positioning context.
+ * Its height is driven entirely by the <img> inside it.
+ * No padding, no margin, no fixed height.
+ */
+.interactive-banner {
+  position: relative;
+  width: 100%;
+  display: block;
+  line-height: 0;
+}
+
+/* ── Banner image ───────────────────────────────────────────── */
+/*
+ * width: 100%  — fills the container at every screen width
+ * height: auto — preserves 1376:768 aspect ratio with no distortion
+ * display: block — removes 4px baseline gap beneath inline images
+ *
+ * No object-fit. No crop. No transform. The image is never cropped.
+ * The container height = image height at all times.
+ */
+.banner-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ── SVG hotspot layer ──────────────────────────────────────── */
+/*
+ * inset: 0  — pins all four edges flush with the image
+ * width/height: 100% — SVG scales to match the image exactly
+ *
+ * Because the SVG uses viewBox="0 0 1376 768" with
+ * preserveAspectRatio="xMidYMid meet", the browser applies the
+ * SAME scaling transformation that it applies to the image.
+ * Every pixel coordinate in the SVG maps 1:1 to the image.
+ */
+.banner-hotspots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* SVG itself is not interactive — only the rects inside */
+  pointer-events: none;
+}
+
+/* ── Card hit-boxes ─────────────────────────────────────────── */
+/*
+ * pointer-events: all  — re-enable clicks on the rects themselves
+ * vector-effect: non-scaling-stroke  — stroke stays 2px at all zoom
+ *
+ * ────────────────────────────────────────────────────────────
+ * DEBUG MODE: stroke is currently RED so you can visually verify
+ * that each rect sits exactly on its navy card before going live.
+ *
+ * Once alignment is confirmed, change:
+ *   fill:   transparent;
+ *   stroke: transparent;
+ * ────────────────────────────────────────────────────────────
+ */
+.card-hitbox {
+  fill:   transparent;
+  stroke: transparent;
+  stroke-width: 2;
+
+  cursor: pointer;
+  pointer-events: all;
+  transition:
+    stroke 0.18s ease,
+    filter 0.18s ease;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Hover — warm-gold border (active even in debug so you can test) */
+.card-hitbox:hover {
+  fill:   rgba(217, 183, 95, 0.06);
+  stroke: #d9b75f;
+  filter: drop-shadow(0 0 3px rgba(217, 183, 95, 0.35));
+}
+
+/* Keyboard focus — same as hover */
+.card-hitbox:focus-visible {
+  outline: none;
+  stroke: #d9b75f;
+  filter: drop-shadow(0 0 4px rgba(217, 183, 95, 0.45));
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+/*
+ * No media queries needed for positioning.
+ * The SVG viewBox + preserveAspectRatio handle all scaling
+ * identically to how the browser scales the <img>.
+ */

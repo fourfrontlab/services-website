@@ -928,7 +928,7 @@ textarea {
 .feature-caption > span {
   border-color: #25283240;
 }
-.studio-home > section:not(.new-hero),
+.studio-home > section:not(.new-hero):not(.interactive-hero),
 .work-section,
 .service-home,
 .partner-section,
